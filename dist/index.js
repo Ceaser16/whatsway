@@ -15801,11 +15801,13 @@ app.use((req, res, next) => {
   } else {
     serveStatic(app);
   }
-  const port = parseInt(process.env.PORT || "5000", 10);
+  const port = process.env.PORT || 5e3;
   const listenOptions = {
-    port,
-    host: process.env.NODE_ENV === "production" ? "0.0.0.0" : "127.0.0.1"
+    port
   };
+  if (process.env.NODE_ENV !== "production") {
+    listenOptions.host = "127.0.0.1";
+  }
   if (process.platform !== "win32" && process.env.NODE_ENV !== "production") {
     listenOptions.reusePort = true;
   }
