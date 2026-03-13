@@ -401,19 +401,7 @@ app.use((req, res, next) => {
   //   channelHealthMonitor.start();
   // });
 
-  const listenOptions: any = {
-    port,
-  };
-  if (process.env.NODE_ENV !== "production") {
-    listenOptions.host = "127.0.0.1";
-  }
-  
-  // Only use reusePort if the platform supports it
-  if (process.platform !== "win32" && process.env.NODE_ENV !== "production") {
-    listenOptions.reusePort = true;
-  }
-  
-  httpServer.listen(listenOptions, async () => {
+  httpServer.listen(port, async () => {
     log(`serving on port ${port}`);
     
     // Start the message status updater cron job

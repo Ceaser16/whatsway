@@ -15802,16 +15802,7 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
   const port = process.env.PORT || 5e3;
-  const listenOptions = {
-    port
-  };
-  if (process.env.NODE_ENV !== "production") {
-    listenOptions.host = "127.0.0.1";
-  }
-  if (process.platform !== "win32" && process.env.NODE_ENV !== "production") {
-    listenOptions.reusePort = true;
-  }
-  httpServer.listen(listenOptions, async () => {
+  httpServer.listen(port, async () => {
     log(`serving on port ${port}`);
     const messageStatusUpdater = new MessageStatusUpdater();
     messageStatusUpdater.startCronJob(60);
