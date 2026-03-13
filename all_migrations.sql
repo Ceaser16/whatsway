@@ -1,0 +1,737 @@
+﻿CREATE TABLE "analytics" (
+	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"channel_id" varchar,
+	"date" timestamp NOT NULL,
+	"messages_sent" integer DEFAULT 0,
+	"messages_delivered" integer DEFAULT 0,
+	"messages_read" integer DEFAULT 0,
+	"messages_replied" integer DEFAULT 0,
+	"new_contacts" integer DEFAULT 0,
+	"active_campaigns" integer DEFAULT 0,
+	"created_at" timestamp DEFAULT now()
+);
+--> statement-breakpoint
+CREATE TABLE "api_logs" (
+	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"channel_id" varchar,
+	"request_type" varchar(50) NOT NULL,
+	"endpoint" text NOT NULL,
+	"method" varchar(10) NOT NULL,
+	"request_body" jsonb,
+	"response_status" integer,
+	"response_body" jsonb,
+	"duration" integer,
+	"created_at" timestamp DEFAULT now()
+);
+--> statement-breakpoint
+CREATE TABLE "automation_execution_logs" (
+	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"execution_id" varchar NOT NULL,
+	"node_id" varchar NOT NULL,
+	"node_type" text NOT NULL,
+	"status" text NOT NULL,
+	"input" jsonb DEFAULT '{}'::jsonb,
+	"output" jsonb DEFAULT '{}'::jsonb,
+	"error" text,
+	"executed_at" timestamp DEFAULT now()
+);
+--> statement-breakpoint
+CREATE TABLE "automation_executions" (
+	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"automation_id" varchar NOT NULL,
+	"contact_id" varchar,
+	"conversation_id" varchar,
+	"trigger_data" jsonb DEFAULT '{}'::jsonb,
+	"status" text NOT NULL,
+	"current_node_id" varchar,
+	"execution_path" jsonb DEFAULT '[]'::jsonb,
+	"variables" jsonb DEFAULT '{}'::jsonb,
+	"error" text,
+	"started_at" timestamp DEFAULT now(),
+	"completed_at" timestamp
+);
+--> statement-breakpoint
+CREATE TABLE "automation_nodes" (
+	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"automation_id" varchar NOT NULL,
+	"node_id" varchar NOT NULL,
+	"type" text NOT NULL,
+	"subtype" text,
+	"position" jsonb DEFAULT '{}'::jsonb,
+	"data" jsonb DEFAULT '{}'::jsonb,
+	"connections" jsonb DEFAULT '[]'::jsonb,
+	"created_at" timestamp DEFAULT now(),
+	"updated_at" timestamp DEFAULT now(),
+	CONSTRAINT "automation_nodes_unique_idx" UNIQUE("automation_id","node_id")
+);
+--> statement-breakpoint
+CREATE TABLE "automations" (
+	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"channel_id" varchar,
+	"name" text NOT NULL,
+	"description" text,
+	"trigger" text NOT NULL,
+	"trigger_config" jsonb DEFAULT '{}'::jsonb,
+	"status" text DEFAULT 'inactive',
+	"execution_count" integer DEFAULT 0,
+	"last_executed_at" timestamp,
+	"created_by" varchar,
+	"created_at" timestamp DEFAULT now(),
+	"updated_at" timestamp DEFAULT now()
+);
+--> statement-breakpoint
+CREATE TABLE "campaign_recipients" (
+	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"campaign_id" varchar NOT NULL,
+	"contact_id" varchar,
+	"phone" text NOT NULL,
+	"name" text,
+	"status" text DEFAULT 'pending',
+	"whatsapp_message_id" varchar,
+	"template_params" jsonb DEFAULT '{}'::jsonb,
+	"sent_at" timestamp,
+	"delivered_at" timestamp,
+	"read_at" timestamp,
+	"error_code" varchar,
+	"error_message" text,
+	"retry_count" integer DEFAULT 0,
+	"created_at" timestamp DEFAULT now(),
+	"updated_at" timestamp DEFAULT now(),
+	CONSTRAINT "campaign_phone_unique" UNIQUE("campaign_id","phone")
+);
+--> statement-breakpoint
+CREATE TABLE "campaigns" (
+	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"channel_id" varchar,
+	"name" text NOT NULL,
+	"description" text,
+	"campaign_type" text NOT NULL,
+	"type" text NOT NULL,
+	"api_type" text NOT NULL,
+	"template_id" varchar,
+	"template_name" text,
+	"template_language" text,
+	"variable_mapping" jsonb DEFAULT '{}'::jsonb,
+	"contact_groups" jsonb DEFAULT '[]'::jsonb,
+	"csv_data" jsonb DEFAULT '[]'::jsonb,
+	"api_key" varchar,
+	"api_endpoint" text,
+	"status" text DEFAULT 'draft',
+	"scheduled_at" timestamp,
+	"recipient_count" integer DEFAULT 0,
+	"sent_count" integer DEFAULT 0,
+	"delivered_count" integer DEFAULT 0,
+	"read_count" integer DEFAULT 0,
+	"replied_count" integer DEFAULT 0,
+	"failed_count" integer DEFAULT 0,
+	"completed_at" timestamp,
+	"created_at" timestamp DEFAULT now(),
+	"updated_at" timestamp DEFAULT now()
+);
+--> statement-breakpoint
+CREATE TABLE "channels" (
+	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"name" text NOT NULL,
+	"phone_number_id" text NOT NULL,
+	"access_token" text NOT NULL,
+	"whatsapp_business_account_id" text,
+	"phone_number" text,
+	"is_active" boolean DEFAULT true,
+	"health_status" text DEFAULT 'unknown',
+	"last_health_check" timestamp,
+	"health_details" jsonb DEFAULT '{}'::jsonb,
+	"created_at" timestamp DEFAULT now(),
+	"updated_at" timestamp DEFAULT now()
+);
+--> statement-breakpoint
+CREATE TABLE "contacts" (
+	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"channel_id" varchar,
+	"name" text NOT NULL,
+	"phone" text NOT NULL,
+	"email" text,
+	"groups" jsonb DEFAULT '[]'::jsonb,
+	"tags" jsonb DEFAULT '[]'::jsonb,
+	"status" text DEFAULT 'active',
+	"last_contact" timestamp,
+	"created_at" timestamp DEFAULT now(),
+	"updated_at" timestamp DEFAULT now(),
+	CONSTRAINT "contacts_channel_phone_unique" UNIQUE("channel_id","phone")
+);
+--> statement-breakpoint
+CREATE TABLE "conversation_assignments" (
+	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"conversation_id" varchar NOT NULL,
+	"user_id" varchar NOT NULL,
+	"assigned_by" varchar,
+	"assigned_at" timestamp DEFAULT now(),
+	"status" text DEFAULT 'active' NOT NULL,
+	"priority" text DEFAULT 'normal',
+	"notes" text,
+	"resolved_at" timestamp,
+	"created_at" timestamp DEFAULT now(),
+	"updated_at" timestamp DEFAULT now()
+);
+--> statement-breakpoint
+CREATE TABLE "conversations" (
+	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"channel_id" varchar,
+	"contact_id" varchar,
+	"assigned_to" varchar,
+	"contact_phone" varchar,
+	"contact_name" varchar,
+	"status" text DEFAULT 'open',
+	"priority" text DEFAULT 'normal',
+	"tags" jsonb DEFAULT '[]'::jsonb,
+	"unread_count" integer DEFAULT 0,
+	"last_message_at" timestamp,
+	"last_message_text" text,
+	"created_at" timestamp DEFAULT now(),
+	"updated_at" timestamp DEFAULT now()
+);
+--> statement-breakpoint
+CREATE TABLE "message_queue" (
+	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"campaign_id" varchar,
+	"channel_id" varchar,
+	"recipient_phone" varchar(20) NOT NULL,
+	"template_name" varchar(100),
+	"template_params" jsonb DEFAULT '[]'::jsonb,
+	"message_type" varchar(20) NOT NULL,
+	"status" varchar(20) DEFAULT 'queued',
+	"attempts" integer DEFAULT 0,
+	"whatsapp_message_id" varchar(100),
+	"conversation_id" varchar(100),
+	"sent_via" varchar(20),
+	"cost" varchar(20),
+	"error_code" varchar(50),
+	"error_message" text,
+	"scheduled_for" timestamp,
+	"processed_at" timestamp,
+	"delivered_at" timestamp,
+	"read_at" timestamp,
+	"created_at" timestamp DEFAULT now()
+);
+--> statement-breakpoint
+CREATE TABLE "messages" (
+	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"conversation_id" varchar NOT NULL,
+	"whatsapp_message_id" varchar,
+	"from_user" boolean DEFAULT false,
+	"direction" varchar DEFAULT 'outbound',
+	"content" text NOT NULL,
+	"type" text DEFAULT 'text',
+	"message_type" varchar,
+	"status" text DEFAULT 'sent',
+	"timestamp" timestamp,
+	"metadata" jsonb DEFAULT '{}'::jsonb,
+	"delivered_at" timestamp,
+	"read_at" timestamp,
+	"error_code" varchar(50),
+	"error_message" text,
+	"error_details" jsonb,
+	"campaign_id" varchar,
+	"created_at" timestamp DEFAULT now(),
+	"updated_at" timestamp DEFAULT now()
+);
+--> statement-breakpoint
+CREATE TABLE "templates" (
+	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"channel_id" varchar,
+	"name" text NOT NULL,
+	"category" text NOT NULL,
+	"language" text DEFAULT 'en_US',
+	"header" text,
+	"body" text NOT NULL,
+	"footer" text,
+	"buttons" jsonb DEFAULT '[]'::jsonb,
+	"variables" jsonb DEFAULT '[]'::jsonb,
+	"status" text DEFAULT 'draft',
+	"rejection_reason" text,
+	"media_type" text DEFAULT 'text',
+	"media_url" text,
+	"media_handle" text,
+	"carousel_cards" jsonb DEFAULT '[]'::jsonb,
+	"whatsapp_template_id" text,
+	"usage_count" integer DEFAULT 0,
+	"created_at" timestamp DEFAULT now(),
+	"updated_at" timestamp DEFAULT now()
+);
+--> statement-breakpoint
+CREATE TABLE "user_activity_logs" (
+	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"user_id" varchar NOT NULL,
+	"action" text NOT NULL,
+	"entity_type" text,
+	"entity_id" varchar,
+	"details" jsonb DEFAULT '{}'::jsonb,
+	"ip_address" text,
+	"user_agent" text,
+	"created_at" timestamp DEFAULT now()
+);
+--> statement-breakpoint
+CREATE TABLE "users" (
+	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"username" text NOT NULL,
+	"password" text NOT NULL,
+	"email" text NOT NULL,
+	"first_name" text,
+	"last_name" text,
+	"role" text DEFAULT 'admin' NOT NULL,
+	"avatar" text,
+	"status" text DEFAULT 'active' NOT NULL,
+	"permissions" text[] NOT NULL,
+	"last_login" timestamp,
+	"created_at" timestamp DEFAULT now(),
+	"updated_at" timestamp DEFAULT now(),
+	CONSTRAINT "users_username_unique" UNIQUE("username"),
+	CONSTRAINT "users_email_unique" UNIQUE("email")
+);
+--> statement-breakpoint
+CREATE TABLE "webhook_configs" (
+	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"channel_id" varchar,
+	"webhook_url" text NOT NULL,
+	"verify_token" varchar(100) NOT NULL,
+	"app_secret" text,
+	"events" jsonb DEFAULT '[]'::jsonb NOT NULL,
+	"is_active" boolean DEFAULT true,
+	"last_ping_at" timestamp,
+	"created_at" timestamp DEFAULT now()
+);
+--> statement-breakpoint
+CREATE TABLE "whatsapp_channels" (
+	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"name" text NOT NULL,
+	"phone_number" varchar(20) NOT NULL,
+	"phone_number_id" varchar(50) NOT NULL,
+	"waba_id" varchar(50) NOT NULL,
+	"access_token" text NOT NULL,
+	"business_account_id" varchar(50),
+	"rate_limit_tier" varchar(20) DEFAULT 'standard',
+	"quality_rating" varchar(20) DEFAULT 'green',
+	"status" varchar(20) DEFAULT 'inactive',
+	"error_message" text,
+	"last_health_check" timestamp,
+	"message_limit" integer,
+	"messages_used" integer,
+	"created_at" timestamp DEFAULT now(),
+	"updated_at" timestamp DEFAULT now(),
+	CONSTRAINT "whatsapp_channels_phone_number_unique" UNIQUE("phone_number")
+);
+--> statement-breakpoint
+ALTER TABLE "api_logs" ADD CONSTRAINT "api_logs_channel_id_whatsapp_channels_id_fk" FOREIGN KEY ("channel_id") REFERENCES "public"."whatsapp_channels"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "automation_execution_logs" ADD CONSTRAINT "automation_execution_logs_execution_id_automation_executions_id_fk" FOREIGN KEY ("execution_id") REFERENCES "public"."automation_executions"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "automation_executions" ADD CONSTRAINT "automation_executions_automation_id_automations_id_fk" FOREIGN KEY ("automation_id") REFERENCES "public"."automations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "automation_executions" ADD CONSTRAINT "automation_executions_contact_id_contacts_id_fk" FOREIGN KEY ("contact_id") REFERENCES "public"."contacts"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "automation_executions" ADD CONSTRAINT "automation_executions_conversation_id_conversations_id_fk" FOREIGN KEY ("conversation_id") REFERENCES "public"."conversations"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "automation_nodes" ADD CONSTRAINT "automation_nodes_automation_id_automations_id_fk" FOREIGN KEY ("automation_id") REFERENCES "public"."automations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "automations" ADD CONSTRAINT "automations_channel_id_channels_id_fk" FOREIGN KEY ("channel_id") REFERENCES "public"."channels"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "automations" ADD CONSTRAINT "automations_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "campaign_recipients" ADD CONSTRAINT "campaign_recipients_campaign_id_campaigns_id_fk" FOREIGN KEY ("campaign_id") REFERENCES "public"."campaigns"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "campaign_recipients" ADD CONSTRAINT "campaign_recipients_contact_id_contacts_id_fk" FOREIGN KEY ("contact_id") REFERENCES "public"."contacts"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "campaigns" ADD CONSTRAINT "campaigns_channel_id_channels_id_fk" FOREIGN KEY ("channel_id") REFERENCES "public"."channels"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "campaigns" ADD CONSTRAINT "campaigns_template_id_templates_id_fk" FOREIGN KEY ("template_id") REFERENCES "public"."templates"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "contacts" ADD CONSTRAINT "contacts_channel_id_channels_id_fk" FOREIGN KEY ("channel_id") REFERENCES "public"."channels"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "conversation_assignments" ADD CONSTRAINT "conversation_assignments_conversation_id_conversations_id_fk" FOREIGN KEY ("conversation_id") REFERENCES "public"."conversations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "conversation_assignments" ADD CONSTRAINT "conversation_assignments_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "conversations" ADD CONSTRAINT "conversations_channel_id_channels_id_fk" FOREIGN KEY ("channel_id") REFERENCES "public"."channels"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "conversations" ADD CONSTRAINT "conversations_contact_id_contacts_id_fk" FOREIGN KEY ("contact_id") REFERENCES "public"."contacts"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "message_queue" ADD CONSTRAINT "message_queue_campaign_id_campaigns_id_fk" FOREIGN KEY ("campaign_id") REFERENCES "public"."campaigns"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "message_queue" ADD CONSTRAINT "message_queue_channel_id_whatsapp_channels_id_fk" FOREIGN KEY ("channel_id") REFERENCES "public"."whatsapp_channels"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "messages" ADD CONSTRAINT "messages_conversation_id_conversations_id_fk" FOREIGN KEY ("conversation_id") REFERENCES "public"."conversations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "messages" ADD CONSTRAINT "messages_campaign_id_campaigns_id_fk" FOREIGN KEY ("campaign_id") REFERENCES "public"."campaigns"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "templates" ADD CONSTRAINT "templates_channel_id_channels_id_fk" FOREIGN KEY ("channel_id") REFERENCES "public"."channels"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "user_activity_logs" ADD CONSTRAINT "user_activity_logs_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "automation_execution_logs_execution_idx" ON "automation_execution_logs" USING btree ("execution_id");--> statement-breakpoint
+CREATE INDEX "automation_executions_automation_idx" ON "automation_executions" USING btree ("automation_id");--> statement-breakpoint
+CREATE INDEX "automation_executions_status_idx" ON "automation_executions" USING btree ("status");--> statement-breakpoint
+CREATE INDEX "automation_nodes_automation_idx" ON "automation_nodes" USING btree ("automation_id");--> statement-breakpoint
+CREATE INDEX "automations_channel_idx" ON "automations" USING btree ("channel_id");--> statement-breakpoint
+CREATE INDEX "automations_status_idx" ON "automations" USING btree ("status");--> statement-breakpoint
+CREATE INDEX "recipients_campaign_idx" ON "campaign_recipients" USING btree ("campaign_id");--> statement-breakpoint
+CREATE INDEX "recipients_status_idx" ON "campaign_recipients" USING btree ("status");--> statement-breakpoint
+CREATE INDEX "recipients_phone_idx" ON "campaign_recipients" USING btree ("phone");--> statement-breakpoint
+CREATE INDEX "campaigns_channel_idx" ON "campaigns" USING btree ("channel_id");--> statement-breakpoint
+CREATE INDEX "campaigns_status_idx" ON "campaigns" USING btree ("status");--> statement-breakpoint
+CREATE INDEX "campaigns_created_idx" ON "campaigns" USING btree ("created_at");--> statement-breakpoint
+CREATE INDEX "contacts_channel_idx" ON "contacts" USING btree ("channel_id");--> statement-breakpoint
+CREATE INDEX "contacts_phone_idx" ON "contacts" USING btree ("phone");--> statement-breakpoint
+CREATE INDEX "contacts_status_idx" ON "contacts" USING btree ("status");--> statement-breakpoint
+CREATE INDEX "conversations_channel_idx" ON "conversations" USING btree ("channel_id");--> statement-breakpoint
+CREATE INDEX "conversations_contact_idx" ON "conversations" USING btree ("contact_id");--> statement-breakpoint
+CREATE INDEX "conversations_phone_idx" ON "conversations" USING btree ("contact_phone");--> statement-breakpoint
+CREATE INDEX "conversations_status_idx" ON "conversations" USING btree ("status");--> statement-breakpoint
+CREATE INDEX "messages_conversation_idx" ON "messages" USING btree ("conversation_id");--> statement-breakpoint
+CREATE INDEX "messages_whatsapp_idx" ON "messages" USING btree ("whatsapp_message_id");--> statement-breakpoint
+CREATE INDEX "messages_direction_idx" ON "messages" USING btree ("direction");--> statement-breakpoint
+CREATE INDEX "messages_status_idx" ON "messages" USING btree ("status");--> statement-breakpoint
+CREATE INDEX "messages_timestamp_idx" ON "messages" USING btree ("timestamp");--> statement-breakpoint
+CREATE INDEX "messages_created_idx" ON "messages" USING btree ("created_at");
+ALTER TABLE "api_logs" DROP CONSTRAINT "api_logs_channel_id_whatsapp_channels_id_fk";
+--> statement-breakpoint
+ALTER TABLE "api_logs" ADD CONSTRAINT "api_logs_channel_id_channels_id_fk" FOREIGN KEY ("channel_id") REFERENCES "public"."channels"("id") ON DELETE no action ON UPDATE no action;
+ALTER TABLE "conversation_assignments" ADD CONSTRAINT "conversation_assignments_assigned_by_users_id_fk" FOREIGN KEY ("assigned_by") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
+CREATE TABLE "automation_edges" (
+	"id" varchar PRIMARY KEY NOT NULL,
+	"automation_id" varchar NOT NULL,
+	"source_node_id" varchar NOT NULL,
+	"target_node_id" varchar NOT NULL,
+	"animated" boolean DEFAULT false,
+	"created_at" timestamp DEFAULT now(),
+	"updated_at" timestamp DEFAULT now(),
+	CONSTRAINT "automation_edges_unique_idx" UNIQUE("automation_id","source_node_id","target_node_id")
+);
+--> statement-breakpoint
+ALTER TABLE "automation_nodes" ADD COLUMN "measured" jsonb DEFAULT '{}'::jsonb;--> statement-breakpoint
+ALTER TABLE "automation_edges" ADD CONSTRAINT "automation_edges_automation_id_automations_id_fk" FOREIGN KEY ("automation_id") REFERENCES "public"."automations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "automation_edges" ADD CONSTRAINT "automation_edges_source_node_id_automation_nodes_node_id_fk" FOREIGN KEY ("source_node_id") REFERENCES "public"."automation_nodes"("node_id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "automation_edges" ADD CONSTRAINT "automation_edges_target_node_id_automation_nodes_node_id_fk" FOREIGN KEY ("target_node_id") REFERENCES "public"."automation_nodes"("node_id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "automation_edges_automation_idx" ON "automation_edges" USING btree ("automation_id");
+ALTER TABLE "automation_executions" ADD COLUMN "result" text;
+ALTER TABLE "messages" ALTER COLUMN "conversation_id" DROP NOT NULL;
+CREATE TABLE "panel_config" (
+	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"name" varchar NOT NULL,
+	"tagline" varchar,
+	"description" text,
+	"logo" varchar,
+	"favicon" varchar,
+	"default_language" varchar(5) DEFAULT 'en',
+	"supported_languages" jsonb DEFAULT '["en"]',
+	"company_name" varchar,
+	"company_website" varchar,
+	"support_email" varchar,
+	"created_at" timestamp DEFAULT now(),
+	"updated_at" timestamp DEFAULT now()
+);
+ALTER TABLE "messages" ADD COLUMN "media_id" varchar;--> statement-breakpoint
+ALTER TABLE "messages" ADD COLUMN "media_url" text;--> statement-breakpoint
+ALTER TABLE "messages" ADD COLUMN "media_mime_type" varchar(100);--> statement-breakpoint
+ALTER TABLE "messages" ADD COLUMN "media_sha256" varchar(128);
+CREATE TABLE "storage_settings" (
+	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"provider" text DEFAULT 'digitalocean',
+	"space_name" text NOT NULL,
+	"endpoint" text NOT NULL,
+	"region" text NOT NULL,
+	"access_key" text NOT NULL,
+	"secret_key" text NOT NULL,
+	"is_active" boolean DEFAULT false,
+	"created_at" timestamp DEFAULT now(),
+	"updated_at" timestamp DEFAULT now()
+);
+CREATE TABLE "ai_settings" (
+	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"provider" text DEFAULT 'openai' NOT NULL,
+	"api_key" text NOT NULL,
+	"model" text DEFAULT 'gpt-4o-mini' NOT NULL,
+	"endpoint" text DEFAULT 'https://api.openai.com/v1',
+	"temperature" text DEFAULT '0.7',
+	"max_tokens" text DEFAULT '2048',
+	"is_active" boolean DEFAULT false,
+	"created_at" timestamp DEFAULT now(),
+	"updated_at" timestamp DEFAULT now()
+);
+ALTER TABLE "ai_settings" ADD COLUMN "words" text[] DEFAULT ARRAY[]::text[];
+CREATE TABLE "chatbots" (
+	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"uuid" text NOT NULL,
+	"title" text NOT NULL,
+	"bubble_message" text,
+	"welcome_message" text,
+	"instructions" text,
+	"connect_message" text,
+	"language" text DEFAULT 'en',
+	"interaction_type" text DEFAULT 'ai-only',
+	"avatar_id" integer,
+	"avatar_emoji" text,
+	"avatar_color" text,
+	"primary_color" text DEFAULT '#3B82F6',
+	"logo_url" text,
+	"embed_width" integer DEFAULT 420,
+	"embed_height" integer DEFAULT 745,
+	"is_active" boolean DEFAULT true,
+	"created_at" timestamp DEFAULT now(),
+	"updated_at" timestamp DEFAULT now(),
+	CONSTRAINT "chatbots_uuid_unique" UNIQUE("uuid")
+);
+--> statement-breakpoint
+CREATE TABLE "training_data" (
+	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"chatbot_id" integer,
+	"type" text NOT NULL,
+	"title" text,
+	"content" text,
+	"metadata" jsonb,
+	"created_at" timestamp DEFAULT now()
+);
+--> statement-breakpoint
+ALTER TABLE "conversations" ADD COLUMN "chatbot_id" integer;--> statement-breakpoint
+ALTER TABLE "conversations" ADD COLUMN "session_id" text;--> statement-breakpoint
+ALTER TABLE "messages" ADD COLUMN "from_type" varchar DEFAULT 'user';--> statement-breakpoint
+ALTER TABLE "training_data" ADD CONSTRAINT "training_data_chatbot_id_chatbots_id_fk" FOREIGN KEY ("chatbot_id") REFERENCES "public"."chatbots"("id") ON DELETE no action ON UPDATE no action;
+CREATE TABLE "sites" (
+	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"tenant_id" varchar,
+	"name" text NOT NULL,
+	"domain" text NOT NULL,
+	"widget_code" text NOT NULL,
+	"widget_enabled" boolean DEFAULT true NOT NULL,
+	"widget_config" jsonb DEFAULT '{}'::jsonb NOT NULL,
+	"ai_training_config" jsonb DEFAULT '{"trainFromKB": false, "trainFromDocuments": true}'::jsonb NOT NULL,
+	"auto_assignment_config" jsonb DEFAULT '{"enabled": false, "strategy": "round_robin"}'::jsonb NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "sites_widget_code_unique" UNIQUE("widget_code")
+);
+--> statement-breakpoint
+CREATE TABLE "tenants" (
+	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"name" text NOT NULL,
+	"email" text NOT NULL,
+	"active" boolean DEFAULT true NOT NULL,
+	"settings" jsonb DEFAULT '{}'::jsonb NOT NULL,
+	"stripe_customer_id" text,
+	"stripe_subscription_id" text,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "tenants_email_unique" UNIQUE("email")
+);
+ALTER TABLE "conversations" ADD COLUMN "type" text DEFAULT 'whatsapp';
+CREATE TABLE "knowledge_articles" (
+	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"category_id" varchar NOT NULL,
+	"title" varchar(500) NOT NULL,
+	"content" text NOT NULL,
+	"order" integer DEFAULT 0,
+	"published" boolean DEFAULT true,
+	"views" integer DEFAULT 0,
+	"helpful" integer DEFAULT 0,
+	"not_helpful" integer DEFAULT 0,
+	"created_at" timestamp DEFAULT now(),
+	"updated_at" timestamp DEFAULT now()
+);
+--> statement-breakpoint
+CREATE TABLE "knowledge_categories" (
+	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"site_id" varchar NOT NULL,
+	"parent_id" varchar,
+	"name" varchar(255) NOT NULL,
+	"icon" varchar(50),
+	"description" text,
+	"order" integer DEFAULT 0,
+	"created_at" timestamp DEFAULT now(),
+	"updated_at" timestamp DEFAULT now()
+);
+--> statement-breakpoint
+ALTER TABLE "contacts" ADD COLUMN "tenant_id" varchar;--> statement-breakpoint
+CREATE INDEX "articles_category_idx" ON "knowledge_articles" USING btree ("category_id");--> statement-breakpoint
+CREATE INDEX "articles_published_idx" ON "knowledge_articles" USING btree ("published");--> statement-breakpoint
+CREATE INDEX "categories_site_idx" ON "knowledge_categories" USING btree ("site_id");--> statement-breakpoint
+CREATE INDEX "categories_parent_idx" ON "knowledge_categories" USING btree ("parent_id");
+ALTER TABLE "contacts" ADD COLUMN "source" varchar(100);
+CREATE TABLE "payment_providers" (
+	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"name" varchar NOT NULL,
+	"provider_key" varchar NOT NULL,
+	"description" text,
+	"logo" varchar,
+	"is_active" boolean DEFAULT true,
+	"config" jsonb,
+	"supported_currencies" jsonb,
+	"supported_methods" jsonb,
+	"created_at" timestamp DEFAULT now(),
+	"updated_at" timestamp DEFAULT now(),
+	CONSTRAINT "payment_providers_provider_key_unique" UNIQUE("provider_key")
+);
+--> statement-breakpoint
+CREATE TABLE "subscriptions" (
+	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"user_id" varchar NOT NULL,
+	"plan_id" varchar NOT NULL,
+	"status" varchar NOT NULL,
+	"billing_cycle" varchar NOT NULL,
+	"start_date" timestamp NOT NULL,
+	"end_date" timestamp NOT NULL,
+	"auto_renew" boolean DEFAULT true,
+	"created_at" timestamp DEFAULT now(),
+	"updated_at" timestamp DEFAULT now()
+);
+--> statement-breakpoint
+CREATE TABLE "transactions" (
+	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"user_id" varchar NOT NULL,
+	"plan_id" varchar NOT NULL,
+	"subscription_id" varchar,
+	"payment_provider_id" varchar NOT NULL,
+	"amount" numeric(10, 2) NOT NULL,
+	"currency" varchar DEFAULT 'USD',
+	"billing_cycle" varchar NOT NULL,
+	"provider_transaction_id" varchar,
+	"provider_order_id" varchar,
+	"provider_payment_id" varchar,
+	"status" varchar NOT NULL,
+	"payment_method" varchar,
+	"metadata" jsonb,
+	"paid_at" timestamp,
+	"refunded_at" timestamp,
+	"created_at" timestamp DEFAULT now(),
+	"updated_at" timestamp DEFAULT now()
+);
+--> statement-breakpoint
+ALTER TABLE "subscriptions" ADD CONSTRAINT "subscriptions_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "subscriptions" ADD CONSTRAINT "subscriptions_plan_id_plans_id_fk" FOREIGN KEY ("plan_id") REFERENCES "public"."plans"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "transactions" ADD CONSTRAINT "transactions_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "transactions" ADD CONSTRAINT "transactions_plan_id_plans_id_fk" FOREIGN KEY ("plan_id") REFERENCES "public"."plans"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "transactions" ADD CONSTRAINT "transactions_subscription_id_subscriptions_id_fk" FOREIGN KEY ("subscription_id") REFERENCES "public"."subscriptions"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "transactions" ADD CONSTRAINT "transactions_payment_provider_id_payment_providers_id_fk" FOREIGN KEY ("payment_provider_id") REFERENCES "public"."payment_providers"("id") ON DELETE no action ON UPDATE no action;
+ALTER TABLE "users" ADD COLUMN "created_by" varchar DEFAULT NULL;
+ALTER TABLE "users" ALTER COLUMN "created_by" DROP DEFAULT;
+ALTER TABLE "users" ALTER COLUMN "created_by" SET DEFAULT '';
+CREATE TYPE "public"."ticket_priority" AS ENUM('low', 'medium', 'high', 'urgent');--> statement-breakpoint
+CREATE TYPE "public"."ticket_status" AS ENUM('open', 'in_progress', 'resolved', 'closed');--> statement-breakpoint
+CREATE TYPE "public"."user_type" AS ENUM('user', 'team', 'admin');--> statement-breakpoint
+CREATE TABLE "support_tickets" (
+	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"title" text NOT NULL,
+	"description" text NOT NULL,
+	"status" "ticket_status" DEFAULT 'open' NOT NULL,
+	"priority" "ticket_priority" DEFAULT 'medium' NOT NULL,
+	"creator_id" varchar NOT NULL,
+	"creator_type" "user_type" NOT NULL,
+	"creator_name" text NOT NULL,
+	"creator_email" text NOT NULL,
+	"assigned_to_id" varchar,
+	"assigned_to_name" text,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	"resolved_at" timestamp,
+	"closed_at" timestamp
+);
+--> statement-breakpoint
+CREATE TABLE "ticket_messages" (
+	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"ticket_id" varchar NOT NULL,
+	"sender_id" varchar NOT NULL,
+	"sender_type" "user_type" NOT NULL,
+	"sender_name" text NOT NULL,
+	"message" text NOT NULL,
+	"is_internal" boolean DEFAULT false NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+ALTER TABLE "ticket_messages" ADD CONSTRAINT "ticket_messages_ticket_id_support_tickets_id_fk" FOREIGN KEY ("ticket_id") REFERENCES "public"."support_tickets"("id") ON DELETE cascade ON UPDATE no action;
+ALTER TYPE "public"."user_type" ADD VALUE 'superadmin';
+ALTER TABLE "channels" ADD COLUMN "created_by" varchar DEFAULT '';
+CREATE TABLE "notifications" (
+	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"title" text NOT NULL,
+	"message" text NOT NULL,
+	"target_type" text NOT NULL,
+	"target_ids" text[] DEFAULT ARRAY[]::text[],
+	"status" text DEFAULT 'draft' NOT NULL,
+	"sent_at" timestamp,
+	"created_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "sent_notifications" (
+	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"notification_id" varchar NOT NULL,
+	"user_id" varchar NOT NULL,
+	"is_read" boolean DEFAULT false,
+	"read_at" timestamp,
+	"sent_at" timestamp DEFAULT now()
+);
+--> statement-breakpoint
+ALTER TABLE "contacts" ADD COLUMN "created_by" varchar DEFAULT '';--> statement-breakpoint
+ALTER TABLE "sent_notifications" ADD CONSTRAINT "sent_notifications_notification_id_notifications_id_fk" FOREIGN KEY ("notification_id") REFERENCES "public"."notifications"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "sent_notifications" ADD CONSTRAINT "sent_notifications_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;
+CREATE TABLE "firebase_config" (
+	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"api_key" text,
+	"auth_domain" text,
+	"project_id" text,
+	"storage_bucket" text,
+	"messaging_sender_id" text,
+	"app_id" text,
+	"measurement_id" text,
+	"created_at" timestamp DEFAULT now(),
+	"updated_at" timestamp DEFAULT now()
+);
+--> statement-breakpoint
+ALTER TABLE "campaigns" ADD COLUMN "created_by" varchar;--> statement-breakpoint
+ALTER TABLE "templates" ADD COLUMN "created_by" varchar;
+ALTER TABLE "firebase_config" ADD COLUMN "private_key" text;--> statement-breakpoint
+ALTER TABLE "firebase_config" ADD COLUMN "client_email" text;--> statement-breakpoint
+ALTER TABLE "firebase_config" ADD COLUMN "vapid_key" text;--> statement-breakpoint
+ALTER TABLE "users" ADD COLUMN "fcm_token" varchar(512);
+ALTER TABLE "sent_notifications" DROP CONSTRAINT "sent_notifications_notification_id_notifications_id_fk";
+--> statement-breakpoint
+ALTER TABLE "sent_notifications" DROP CONSTRAINT "sent_notifications_user_id_users_id_fk";
+--> statement-breakpoint
+ALTER TABLE "notifications" ALTER COLUMN "id" SET DATA TYPE serial;--> statement-breakpoint
+ALTER TABLE "notifications" ALTER COLUMN "id" DROP DEFAULT;--> statement-breakpoint
+ALTER TABLE "notifications" ALTER COLUMN "target_type" SET DATA TYPE varchar;--> statement-breakpoint
+ALTER TABLE "notifications" ALTER COLUMN "status" SET DATA TYPE varchar;--> statement-breakpoint
+ALTER TABLE "notifications" ALTER COLUMN "status" SET DEFAULT 'draft';--> statement-breakpoint
+ALTER TABLE "sent_notifications" ALTER COLUMN "id" SET DATA TYPE serial;--> statement-breakpoint
+ALTER TABLE "sent_notifications" ALTER COLUMN "id" DROP DEFAULT;--> statement-breakpoint
+ALTER TABLE "sent_notifications" ALTER COLUMN "notification_id" SET DATA TYPE integer;--> statement-breakpoint
+ALTER TABLE "sent_notifications" ALTER COLUMN "user_id" SET DATA TYPE uuid;--> statement-breakpoint
+ALTER TABLE "notifications" ADD COLUMN "type" varchar DEFAULT 'general' NOT NULL;--> statement-breakpoint
+ALTER TABLE "notifications" ADD COLUMN "created_by" varchar DEFAULT 'system' NOT NULL;--> statement-breakpoint
+ALTER TABLE "sent_notifications" ADD CONSTRAINT "sent_notifications_notification_id_notifications_id_fk" FOREIGN KEY ("notification_id") REFERENCES "public"."notifications"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "sent_notifications" ADD CONSTRAINT "sent_notifications_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
+DROP TABLE "tenants" CASCADE;--> statement-breakpoint
+ALTER TABLE "sites" ADD COLUMN "channel_id" varchar;--> statement-breakpoint
+ALTER TABLE "sites" DROP COLUMN "tenant_id";
+ALTER TABLE "contacts" DROP COLUMN "tenant_id";
+CREATE TABLE "groups" (
+	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"channelId" uuid,
+	"name" varchar(255) NOT NULL,
+	"description" text,
+	"created_by" varchar,
+	"created_at" timestamp DEFAULT now()
+);
+--> statement-breakpoint
+ALTER TABLE "groups" ADD CONSTRAINT "groups_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
+ALTER TABLE "subscriptions" ADD COLUMN "plan_data" jsonb NOT NULL;
+ALTER TABLE "panel_config" ADD COLUMN "currency" varchar(10) DEFAULT 'INR';--> statement-breakpoint
+ALTER TABLE "panel_config" ADD COLUMN "country" varchar(2) DEFAULT 'IN';
+CREATE TABLE "session" (
+	"sid" varchar PRIMARY KEY NOT NULL,
+	"sess" jsonb NOT NULL,
+	"expire" timestamp (6) NOT NULL
+);
+--> statement-breakpoint
+ALTER TABLE "campaigns" ALTER COLUMN "created_by" SET DATA TYPE uuid;
+ALTER TABLE "campaigns" ALTER COLUMN "created_by" SET DATA TYPE varchar;
+CREATE TABLE "otp_verifications" (
+	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"user_id" varchar NOT NULL,
+	"otp_code" varchar(6) NOT NULL,
+	"expires_at" timestamp NOT NULL,
+	"is_used" boolean DEFAULT false,
+	"created_at" timestamp DEFAULT now(),
+	"updated_at" timestamp DEFAULT now()
+);
+--> statement-breakpoint
+CREATE TABLE "smtp_config" (
+	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"host" text NOT NULL,
+	"port" integer NOT NULL,
+	"secure" boolean DEFAULT false,
+	"user" text NOT NULL,
+	"password" text,
+	"from_name" text NOT NULL,
+	"from_email" text NOT NULL,
+	"logo" text DEFAULT 'null',
+	"created_at" timestamp DEFAULT now(),
+	"updated_at" timestamp DEFAULT now()
+);
+--> statement-breakpoint
+ALTER TABLE "users" ADD COLUMN "is_email_verified" boolean DEFAULT false;
+ALTER TABLE "panel_config" ADD COLUMN "log02" varchar;
+ALTER TABLE "panel_config" RENAME COLUMN "log02" TO "logo2";
+ALTER TABLE "ai_settings" ADD COLUMN "channel_id" varchar;--> statement-breakpoint
+ALTER TABLE "ai_settings" ADD CONSTRAINT "ai_settings_channel_id_channels_id_fk" FOREIGN KEY ("channel_id") REFERENCES "public"."channels"("id") ON DELETE no action ON UPDATE no action;
