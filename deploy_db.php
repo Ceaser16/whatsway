@@ -2,7 +2,7 @@
 // Database deployment script for cPanel
 // This script runs the full_schema.sql file directly to avoid memory/UI issues in phpPgAdmin.
 
-$host = 'localhost';
+$host = '127.0.0.1';
 $db   = 'whatsway';
 $user = 'lxianbym_info';
 $pass = '8Co8zI+sVZ34';
