@@ -243,7 +243,7 @@ CREATE TABLE "conversations" (
 	"status" text DEFAULT 'open',
 	"priority" text DEFAULT 'normal',
 	"type" text DEFAULT 'whatsapp',
-	"chatbot_id" integer,
+	"chatbot_id" varchar,
 	"session_id" text,
 	"tags" jsonb DEFAULT '[]'::jsonb,
 	"unread_count" integer DEFAULT 0,
@@ -553,7 +553,7 @@ CREATE TABLE "ticket_messages" (
 --> statement-breakpoint
 CREATE TABLE "training_data" (
 	"id" varchar PRIMARY KEY DEFAULT md5(random()::text || clock_timestamp()::text) NOT NULL,
-	"chatbot_id" integer,
+	"chatbot_id" varchar,
 	"type" text NOT NULL,
 	"title" text,
 	"content" text,
