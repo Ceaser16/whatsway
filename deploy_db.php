@@ -2,11 +2,12 @@
 // Database deployment script for cPanel
 // This script runs the full_schema.sql file directly to avoid memory/UI issues in phpPgAdmin.
 
-$host = '127.0.0.1';
-$db   = 'whatsway';
-$user = 'lxianbym_info';
-$pass = '8Co8zI+sVZ34';
-$port = '5432';
+$prefix = 'lxianbym_'; // Your cPanel username prefix
+$host   = '127.0.0.1';
+$db     = $prefix . 'whatsway';
+$user   = $prefix . 'info'; // Assuming you created 'info' as a user in cPanel
+$pass   = '8Co8zI+sVZ34';
+$port   = '5432';
 
 try {
     // Removing host/port often forces the use of the default Unix socket on cPanel
