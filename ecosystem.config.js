@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: "whatsway",
-      script: "./dist/index.js",
+      script: "./server/index.js",
       instances: "max",
       exec_mode: "cluster",
       env: {
