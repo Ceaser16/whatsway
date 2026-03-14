@@ -9,7 +9,8 @@ $pass = '8Co8zI+sVZ34';
 $port = '5432';
 
 try {
-    $dsn = "pgsql:host=$host;port=$port;dbname=$db";
+    // Removing host/port often forces the use of the default Unix socket on cPanel
+    $dsn = "pgsql:dbname=$db";
     $pdo = new PDO($dsn, $user, $pass, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
 
     echo "<html><body style='font-family:sans-serif; padding:40px; line-height:1.6;'>";
