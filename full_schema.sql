@@ -1,9 +1,9 @@
-CREATE EXTENSION IF NOT EXISTS pgcrypto;--> statement-breakpoint
+-- Removed extension requirement for cPanel compatibility
 CREATE TYPE "public"."ticket_priority" AS ENUM('low', 'medium', 'high', 'urgent');--> statement-breakpoint
 CREATE TYPE "public"."ticket_status" AS ENUM('open', 'in_progress', 'resolved', 'closed');--> statement-breakpoint
 CREATE TYPE "public"."user_type" AS ENUM('user', 'team', 'admin', 'superadmin');--> statement-breakpoint
 CREATE TABLE "ai_settings" (
-	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" varchar PRIMARY KEY DEFAULT md5(random()::text || clock_timestamp()::text) NOT NULL,
 	"channel_id" varchar,
 	"provider" text DEFAULT 'openai' NOT NULL,
 	"api_key" text NOT NULL,
@@ -18,7 +18,7 @@ CREATE TABLE "ai_settings" (
 );
 --> statement-breakpoint
 CREATE TABLE "analytics" (
-	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" varchar PRIMARY KEY DEFAULT md5(random()::text || clock_timestamp()::text) NOT NULL,
 	"channel_id" varchar,
 	"date" timestamp NOT NULL,
 	"messages_sent" integer DEFAULT 0,
@@ -31,7 +31,7 @@ CREATE TABLE "analytics" (
 );
 --> statement-breakpoint
 CREATE TABLE "api_logs" (
-	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" varchar PRIMARY KEY DEFAULT md5(random()::text || clock_timestamp()::text) NOT NULL,
 	"channel_id" varchar,
 	"request_type" varchar(50) NOT NULL,
 	"endpoint" text NOT NULL,
@@ -55,7 +55,7 @@ CREATE TABLE "automation_edges" (
 );
 --> statement-breakpoint
 CREATE TABLE "automation_execution_logs" (
-	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" varchar PRIMARY KEY DEFAULT md5(random()::text || clock_timestamp()::text) NOT NULL,
 	"execution_id" varchar NOT NULL,
 	"node_id" varchar NOT NULL,
 	"node_type" text NOT NULL,
@@ -67,7 +67,7 @@ CREATE TABLE "automation_execution_logs" (
 );
 --> statement-breakpoint
 CREATE TABLE "automation_executions" (
-	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" varchar PRIMARY KEY DEFAULT md5(random()::text || clock_timestamp()::text) NOT NULL,
 	"automation_id" varchar NOT NULL,
 	"contact_id" varchar,
 	"conversation_id" varchar,
@@ -83,7 +83,7 @@ CREATE TABLE "automation_executions" (
 );
 --> statement-breakpoint
 CREATE TABLE "automation_nodes" (
-	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" varchar PRIMARY KEY DEFAULT md5(random()::text || clock_timestamp()::text) NOT NULL,
 	"automation_id" varchar NOT NULL,
 	"node_id" varchar NOT NULL,
 	"type" text NOT NULL,
@@ -94,11 +94,12 @@ CREATE TABLE "automation_nodes" (
 	"connections" jsonb DEFAULT '[]'::jsonb,
 	"created_at" timestamp DEFAULT now(),
 	"updated_at" timestamp DEFAULT now(),
-	CONSTRAINT "automation_nodes_unique_idx" UNIQUE("automation_id","node_id")
+	CONSTRAINT "automation_nodes_unique_idx" UNIQUE("automation_id","node_id"),
+	CONSTRAINT "automation_nodes_node_id_unique" UNIQUE("node_id")
 );
 --> statement-breakpoint
 CREATE TABLE "automations" (
-	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" varchar PRIMARY KEY DEFAULT md5(random()::text || clock_timestamp()::text) NOT NULL,
 	"channel_id" varchar,
 	"name" text NOT NULL,
 	"description" text,
@@ -113,7 +114,7 @@ CREATE TABLE "automations" (
 );
 --> statement-breakpoint
 CREATE TABLE "campaign_recipients" (
-	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" varchar PRIMARY KEY DEFAULT md5(random()::text || clock_timestamp()::text) NOT NULL,
 	"campaign_id" varchar NOT NULL,
 	"contact_id" varchar,
 	"phone" text NOT NULL,
@@ -133,7 +134,7 @@ CREATE TABLE "campaign_recipients" (
 );
 --> statement-breakpoint
 CREATE TABLE "campaigns" (
-	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" varchar PRIMARY KEY DEFAULT md5(random()::text || clock_timestamp()::text) NOT NULL,
 	"channel_id" varchar,
 	"created_by" varchar,
 	"name" text NOT NULL,
@@ -163,7 +164,7 @@ CREATE TABLE "campaigns" (
 );
 --> statement-breakpoint
 CREATE TABLE "channels" (
-	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" varchar PRIMARY KEY DEFAULT md5(random()::text || clock_timestamp()::text) NOT NULL,
 	"name" text NOT NULL,
 	"phone_number_id" text NOT NULL,
 	"access_token" text NOT NULL,
@@ -179,7 +180,7 @@ CREATE TABLE "channels" (
 );
 --> statement-breakpoint
 CREATE TABLE "chatbots" (
-	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" varchar PRIMARY KEY DEFAULT md5(random()::text || clock_timestamp()::text) NOT NULL,
 	"uuid" text NOT NULL,
 	"title" text NOT NULL,
 	"bubble_message" text,
@@ -202,7 +203,7 @@ CREATE TABLE "chatbots" (
 );
 --> statement-breakpoint
 CREATE TABLE "contacts" (
-	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" varchar PRIMARY KEY DEFAULT md5(random()::text || clock_timestamp()::text) NOT NULL,
 	"channel_id" varchar,
 	"name" text NOT NULL,
 	"phone" text NOT NULL,
@@ -219,7 +220,7 @@ CREATE TABLE "contacts" (
 );
 --> statement-breakpoint
 CREATE TABLE "conversation_assignments" (
-	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" varchar PRIMARY KEY DEFAULT md5(random()::text || clock_timestamp()::text) NOT NULL,
 	"conversation_id" varchar NOT NULL,
 	"user_id" varchar NOT NULL,
 	"assigned_by" varchar,
@@ -233,7 +234,7 @@ CREATE TABLE "conversation_assignments" (
 );
 --> statement-breakpoint
 CREATE TABLE "conversations" (
-	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" varchar PRIMARY KEY DEFAULT md5(random()::text || clock_timestamp()::text) NOT NULL,
 	"channel_id" varchar,
 	"contact_id" varchar,
 	"assigned_to" varchar,
@@ -253,7 +254,7 @@ CREATE TABLE "conversations" (
 );
 --> statement-breakpoint
 CREATE TABLE "firebase_config" (
-	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" varchar PRIMARY KEY DEFAULT md5(random()::text || clock_timestamp()::text) NOT NULL,
 	"api_key" text,
 	"auth_domain" text,
 	"project_id" text,
@@ -269,7 +270,7 @@ CREATE TABLE "firebase_config" (
 );
 --> statement-breakpoint
 CREATE TABLE "groups" (
-	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" varchar PRIMARY KEY DEFAULT md5(random()::text || clock_timestamp()::text) NOT NULL,
 	"channelId" uuid,
 	"name" varchar(255) NOT NULL,
 	"description" text,
@@ -278,7 +279,7 @@ CREATE TABLE "groups" (
 );
 --> statement-breakpoint
 CREATE TABLE "knowledge_articles" (
-	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" varchar PRIMARY KEY DEFAULT md5(random()::text || clock_timestamp()::text) NOT NULL,
 	"category_id" varchar NOT NULL,
 	"title" varchar(500) NOT NULL,
 	"content" text NOT NULL,
@@ -292,7 +293,7 @@ CREATE TABLE "knowledge_articles" (
 );
 --> statement-breakpoint
 CREATE TABLE "knowledge_categories" (
-	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" varchar PRIMARY KEY DEFAULT md5(random()::text || clock_timestamp()::text) NOT NULL,
 	"site_id" varchar NOT NULL,
 	"parent_id" varchar,
 	"name" varchar(255) NOT NULL,
@@ -304,7 +305,7 @@ CREATE TABLE "knowledge_categories" (
 );
 --> statement-breakpoint
 CREATE TABLE "message_queue" (
-	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" varchar PRIMARY KEY DEFAULT md5(random()::text || clock_timestamp()::text) NOT NULL,
 	"campaign_id" varchar,
 	"channel_id" varchar,
 	"recipient_phone" varchar(20) NOT NULL,
@@ -327,7 +328,7 @@ CREATE TABLE "message_queue" (
 );
 --> statement-breakpoint
 CREATE TABLE "messages" (
-	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" varchar PRIMARY KEY DEFAULT md5(random()::text || clock_timestamp()::text) NOT NULL,
 	"conversation_id" varchar,
 	"whatsapp_message_id" varchar,
 	"from_user" boolean DEFAULT false,
@@ -367,7 +368,7 @@ CREATE TABLE "notifications" (
 );
 --> statement-breakpoint
 CREATE TABLE "otp_verifications" (
-	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" varchar PRIMARY KEY DEFAULT md5(random()::text || clock_timestamp()::text) NOT NULL,
 	"user_id" varchar NOT NULL,
 	"otp_code" varchar(6) NOT NULL,
 	"expires_at" timestamp NOT NULL,
@@ -377,7 +378,7 @@ CREATE TABLE "otp_verifications" (
 );
 --> statement-breakpoint
 CREATE TABLE "panel_config" (
-	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" varchar PRIMARY KEY DEFAULT md5(random()::text || clock_timestamp()::text) NOT NULL,
 	"name" varchar NOT NULL,
 	"tagline" varchar,
 	"description" text,
@@ -396,7 +397,7 @@ CREATE TABLE "panel_config" (
 );
 --> statement-breakpoint
 CREATE TABLE "payment_providers" (
-	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" varchar PRIMARY KEY DEFAULT md5(random()::text || clock_timestamp()::text) NOT NULL,
 	"name" varchar NOT NULL,
 	"provider_key" varchar NOT NULL,
 	"description" text,
@@ -411,7 +412,7 @@ CREATE TABLE "payment_providers" (
 );
 --> statement-breakpoint
 CREATE TABLE "plans" (
-	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" varchar PRIMARY KEY DEFAULT md5(random()::text || clock_timestamp()::text) NOT NULL,
 	"name" varchar NOT NULL,
 	"description" text,
 	"icon" varchar,
@@ -443,7 +444,7 @@ CREATE TABLE "session" (
 );
 --> statement-breakpoint
 CREATE TABLE "sites" (
-	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" varchar PRIMARY KEY DEFAULT md5(random()::text || clock_timestamp()::text) NOT NULL,
 	"channel_id" varchar,
 	"name" text NOT NULL,
 	"domain" text NOT NULL,
@@ -457,7 +458,7 @@ CREATE TABLE "sites" (
 );
 --> statement-breakpoint
 CREATE TABLE "smtp_config" (
-	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" varchar PRIMARY KEY DEFAULT md5(random()::text || clock_timestamp()::text) NOT NULL,
 	"host" text NOT NULL,
 	"port" integer NOT NULL,
 	"secure" boolean DEFAULT false,
@@ -471,7 +472,7 @@ CREATE TABLE "smtp_config" (
 );
 --> statement-breakpoint
 CREATE TABLE "storage_settings" (
-	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" varchar PRIMARY KEY DEFAULT md5(random()::text || clock_timestamp()::text) NOT NULL,
 	"provider" text DEFAULT 'digitalocean',
 	"space_name" text NOT NULL,
 	"endpoint" text NOT NULL,
@@ -484,7 +485,7 @@ CREATE TABLE "storage_settings" (
 );
 --> statement-breakpoint
 CREATE TABLE "subscriptions" (
-	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" varchar PRIMARY KEY DEFAULT md5(random()::text || clock_timestamp()::text) NOT NULL,
 	"user_id" varchar NOT NULL,
 	"plan_id" varchar NOT NULL,
 	"plan_data" jsonb NOT NULL,
@@ -498,7 +499,7 @@ CREATE TABLE "subscriptions" (
 );
 --> statement-breakpoint
 CREATE TABLE "support_tickets" (
-	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" varchar PRIMARY KEY DEFAULT md5(random()::text || clock_timestamp()::text) NOT NULL,
 	"title" text NOT NULL,
 	"description" text NOT NULL,
 	"status" "ticket_status" DEFAULT 'open' NOT NULL,
@@ -516,7 +517,7 @@ CREATE TABLE "support_tickets" (
 );
 --> statement-breakpoint
 CREATE TABLE "templates" (
-	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" varchar PRIMARY KEY DEFAULT md5(random()::text || clock_timestamp()::text) NOT NULL,
 	"channel_id" varchar,
 	"created_by" varchar,
 	"name" text NOT NULL,
@@ -540,7 +541,7 @@ CREATE TABLE "templates" (
 );
 --> statement-breakpoint
 CREATE TABLE "ticket_messages" (
-	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" varchar PRIMARY KEY DEFAULT md5(random()::text || clock_timestamp()::text) NOT NULL,
 	"ticket_id" varchar NOT NULL,
 	"sender_id" varchar NOT NULL,
 	"sender_type" "user_type" NOT NULL,
@@ -551,7 +552,7 @@ CREATE TABLE "ticket_messages" (
 );
 --> statement-breakpoint
 CREATE TABLE "training_data" (
-	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" varchar PRIMARY KEY DEFAULT md5(random()::text || clock_timestamp()::text) NOT NULL,
 	"chatbot_id" integer,
 	"type" text NOT NULL,
 	"title" text,
@@ -561,7 +562,7 @@ CREATE TABLE "training_data" (
 );
 --> statement-breakpoint
 CREATE TABLE "transactions" (
-	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" varchar PRIMARY KEY DEFAULT md5(random()::text || clock_timestamp()::text) NOT NULL,
 	"user_id" varchar NOT NULL,
 	"plan_id" varchar NOT NULL,
 	"subscription_id" varchar,
@@ -582,7 +583,7 @@ CREATE TABLE "transactions" (
 );
 --> statement-breakpoint
 CREATE TABLE "user_activity_logs" (
-	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" varchar PRIMARY KEY DEFAULT md5(random()::text || clock_timestamp()::text) NOT NULL,
 	"user_id" varchar NOT NULL,
 	"action" text NOT NULL,
 	"entity_type" text,
@@ -594,7 +595,7 @@ CREATE TABLE "user_activity_logs" (
 );
 --> statement-breakpoint
 CREATE TABLE "users" (
-	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" varchar PRIMARY KEY DEFAULT md5(random()::text || clock_timestamp()::text) NOT NULL,
 	"username" text NOT NULL,
 	"password" text NOT NULL,
 	"email" text NOT NULL,
@@ -616,7 +617,7 @@ CREATE TABLE "users" (
 );
 --> statement-breakpoint
 CREATE TABLE "webhook_configs" (
-	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" varchar PRIMARY KEY DEFAULT md5(random()::text || clock_timestamp()::text) NOT NULL,
 	"channel_id" varchar,
 	"webhook_url" text NOT NULL,
 	"verify_token" varchar(100) NOT NULL,
@@ -628,7 +629,7 @@ CREATE TABLE "webhook_configs" (
 );
 --> statement-breakpoint
 CREATE TABLE "whatsapp_channels" (
-	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" varchar PRIMARY KEY DEFAULT md5(random()::text || clock_timestamp()::text) NOT NULL,
 	"name" text NOT NULL,
 	"phone_number" varchar(20) NOT NULL,
 	"phone_number_id" varchar(50) NOT NULL,
