@@ -21,7 +21,7 @@ import { z } from "zod";
 export const users = pgTable("users", {
   id: varchar("id")
     .primaryKey()
-    .default(sql`gen_random_uuid()`),
+    .default(sql`md5(random()::text || clock_timestamp()::text)`),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
   email: text("email").notNull().unique(),
@@ -44,7 +44,7 @@ export const users = pgTable("users", {
 export const conversationAssignments = pgTable("conversation_assignments", {
   id: varchar("id")
     .primaryKey()
-    .default(sql`gen_random_uuid()`),
+    .default(sql`md5(random()::text || clock_timestamp()::text)`),
   conversationId: varchar("conversation_id")
     .notNull()
     .references(() => conversations.id, { onDelete: "cascade" }),
@@ -67,7 +67,7 @@ export const conversationAssignments = pgTable("conversation_assignments", {
 export const userActivityLogs = pgTable("user_activity_logs", {
   id: varchar("id")
     .primaryKey()
-    .default(sql`gen_random_uuid()`),
+    .default(sql`md5(random()::text || clock_timestamp()::text)`),
   userId: varchar("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
@@ -85,7 +85,7 @@ export const contacts = pgTable(
   {
     id: varchar("id")
       .primaryKey()
-      .default(sql`gen_random_uuid()`),
+      .default(sql`md5(random()::text || clock_timestamp()::text)`),
     channelId: varchar("channel_id").references(() => channels.id, {
       onDelete: "cascade",
     }),
@@ -117,7 +117,7 @@ export const campaigns = pgTable(
   {
     id: varchar("id")
       .primaryKey()
-      .default(sql`gen_random_uuid()`),
+      .default(sql`md5(random()::text || clock_timestamp()::text)`),
     channelId: varchar("channel_id").references(() => channels.id, {
       onDelete: "cascade",
     }),
@@ -162,7 +162,7 @@ export const campaignRecipients = pgTable(
   {
     id: varchar("id")
       .primaryKey()
-      .default(sql`gen_random_uuid()`),
+      .default(sql`md5(random()::text || clock_timestamp()::text)`),
     campaignId: varchar("campaign_id")
       .notNull()
       .references(() => campaigns.id, { onDelete: "cascade" }),
@@ -198,7 +198,7 @@ export const campaignRecipients = pgTable(
 export const channels = pgTable("channels", {
   id: varchar("id")
     .primaryKey()
-    .default(sql`gen_random_uuid()`),
+    .default(sql`md5(random()::text || clock_timestamp()::text)`),
   name: text("name").notNull(),
   phoneNumberId: text("phone_number_id").notNull(),
   accessToken: text("access_token").notNull(),
@@ -217,7 +217,7 @@ export const channels = pgTable("channels", {
 export const templates = pgTable("templates", {
   id: varchar("id")
     .primaryKey()
-    .default(sql`gen_random_uuid()`),
+    .default(sql`md5(random()::text || clock_timestamp()::text)`),
   channelId: varchar("channel_id").references(() => channels.id),
   createdBy: varchar("created_by"),
   name: text("name").notNull(),
@@ -253,7 +253,7 @@ export const conversations = pgTable(
   {
     id: varchar("id")
       .primaryKey()
-      .default(sql`gen_random_uuid()`),
+      .default(sql`md5(random()::text || clock_timestamp()::text)`),
     channelId: varchar("channel_id").references(() => channels.id, {
       onDelete: "cascade",
     }),
@@ -266,7 +266,7 @@ export const conversations = pgTable(
     status: text("status").default("open"), // open, closed, assigned, pending
     priority: text("priority").default("normal"), // low, normal, high, urgent
     type: text("type").default("whatsapp"), // whatsapp, chatbot, sms, email
-    chatbotId: integer("chatbot_id"),
+    chatbotId: varchar("chatbot_id"),
     sessionId: text("session_id"),
     tags: jsonb("tags").default([]),
     unreadCount: integer("unread_count").default(0), // Track unread messages
@@ -294,7 +294,7 @@ export const messages = pgTable(
   {
     id: varchar("id")
       .primaryKey()
-      .default(sql`gen_random_uuid()`),
+      .default(sql`md5(random()::text || clock_timestamp()::text)`),
     conversationId: varchar("conversation_id").references(
       () => conversations.id,
       {
@@ -376,7 +376,7 @@ export const sentNotifications = pgTable("sent_notifications", {
     .references(() => notifications.id, { onDelete: "cascade" })
     .notNull(),
 
-  userId: uuid("user_id")
+  userId: varchar("user_id")
     .references(() => users.id, { onDelete: "cascade" })
     .notNull(),
 
@@ -389,7 +389,7 @@ export const sentNotifications = pgTable("sent_notifications", {
 export const chatbots = pgTable("chatbots", {
   id: varchar("id")
     .primaryKey()
-    .default(sql`gen_random_uuid()`),
+    .default(sql`md5(random()::text || clock_timestamp()::text)`),
   uuid: text("uuid").notNull().unique(),
   title: text("title").notNull(),
   bubbleMessage: text("bubble_message"),
@@ -413,8 +413,8 @@ export const chatbots = pgTable("chatbots", {
 export const trainingData = pgTable("training_data", {
   id: varchar("id")
     .primaryKey()
-    .default(sql`gen_random_uuid()`),
-  chatbotId: integer("chatbot_id").references(() => chatbots.id),
+    .default(sql`md5(random()::text || clock_timestamp()::text)`),
+  chatbotId: varchar("chatbot_id").references(() => chatbots.id),
   type: text("type").notNull(), // 'text', 'pdf', 'website', 'qa'
   title: text("title"),
   content: text("content"),
@@ -428,7 +428,7 @@ export const knowledgeCategories = pgTable(
   {
     id: varchar("id")
       .primaryKey()
-      .default(sql`gen_random_uuid()`),
+      .default(sql`md5(random()::text || clock_timestamp()::text)`),
     siteId: varchar("site_id").notNull(),
     parentId: varchar("parent_id"),
     name: varchar("name", { length: 255 }).notNull(),
@@ -450,7 +450,7 @@ export const knowledgeArticles = pgTable(
   {
     id: varchar("id")
       .primaryKey()
-      .default(sql`gen_random_uuid()`),
+      .default(sql`md5(random()::text || clock_timestamp()::text)`),
     categoryId: varchar("category_id").notNull(),
     title: varchar("title", { length: 500 }).notNull(),
     content: text("content").notNull(),
@@ -472,7 +472,7 @@ export const knowledgeArticles = pgTable(
 export const plans = pgTable("plans", {
   id: varchar("id")
     .primaryKey()
-    .default(sql`gen_random_uuid()`),
+    .default(sql`md5(random()::text || clock_timestamp()::text)`),
   name: varchar("name").notNull(),
   description: text("description"),
   icon: varchar("icon"), // optional: store icon name like 'Zap', 'Crown'
@@ -507,7 +507,7 @@ export const plans = pgTable("plans", {
 export const paymentProviders = pgTable("payment_providers", {
   id: varchar("id")
     .primaryKey()
-    .default(sql`gen_random_uuid()`),
+    .default(sql`md5(random()::text || clock_timestamp()::text)`),
   name: varchar("name").notNull(), // e.g., "Razorpay", "Stripe", "PayPal"
   providerKey: varchar("provider_key").notNull().unique(), // e.g., "razorpay", "stripe"
   description: text("description"),
@@ -533,7 +533,7 @@ export const paymentProviders = pgTable("payment_providers", {
 export const subscriptions = pgTable("subscriptions", {
   id: varchar("id")
     .primaryKey()
-    .default(sql`gen_random_uuid()`),
+    .default(sql`md5(random()::text || clock_timestamp()::text)`),
   userId: varchar("user_id")
     .notNull()
     .references(() => users.id),
@@ -554,7 +554,7 @@ export const subscriptions = pgTable("subscriptions", {
 export const transactions = pgTable("transactions", {
   id: varchar("id")
     .primaryKey()
-    .default(sql`gen_random_uuid()`),
+    .default(sql`md5(random()::text || clock_timestamp()::text)`),
   userId: varchar("user_id")
     .notNull()
     .references(() => users.id),
@@ -620,7 +620,7 @@ export const userTypeEnum = pgEnum("user_type", [
 export const supportTickets = pgTable("support_tickets", {
   id: varchar("id")
     .primaryKey()
-    .default(sql`gen_random_uuid()`),
+    .default(sql`md5(random()::text || clock_timestamp()::text)`),
   title: text("title").notNull(),
   description: text("description").notNull(),
   status: ticketStatusEnum("status").notNull().default("open"),
@@ -646,7 +646,7 @@ export const supportTickets = pgTable("support_tickets", {
 export const ticketMessages = pgTable("ticket_messages", {
   id: varchar("id")
     .primaryKey()
-    .default(sql`gen_random_uuid()`),
+    .default(sql`md5(random()::text || clock_timestamp()::text)`),
   ticketId: varchar("ticket_id")
     .notNull()
     .references(() => supportTickets.id, { onDelete: "cascade" }),
@@ -683,7 +683,7 @@ export const automations = pgTable(
   {
     id: varchar("id")
       .primaryKey()
-      .default(sql`gen_random_uuid()`),
+      .default(sql`md5(random()::text || clock_timestamp()::text)`),
     channelId: varchar("channel_id").references(() => channels.id, {
       onDelete: "cascade",
     }),
@@ -710,7 +710,7 @@ export const automationNodes = pgTable(
   {
     id: varchar("id")
       .primaryKey()
-      .default(sql`gen_random_uuid()`),
+      .default(sql`md5(random()::text || clock_timestamp()::text)`),
     automationId: varchar("automation_id")
       .notNull()
       .references(() => automations.id, { onDelete: "cascade" }),
@@ -776,7 +776,7 @@ export const automationExecutions = pgTable(
   {
     id: varchar("id")
       .primaryKey()
-      .default(sql`gen_random_uuid()`),
+      .default(sql`md5(random()::text || clock_timestamp()::text)`),
     automationId: varchar("automation_id")
       .notNull()
       .references(() => automations.id, { onDelete: "cascade" }),
@@ -810,7 +810,7 @@ export const automationExecutionLogs = pgTable(
   {
     id: varchar("id")
       .primaryKey()
-      .default(sql`gen_random_uuid()`),
+      .default(sql`md5(random()::text || clock_timestamp()::text)`),
     executionId: varchar("execution_id")
       .notNull()
       .references(() => automationExecutions.id, { onDelete: "cascade" }),
@@ -832,7 +832,7 @@ export const automationExecutionLogs = pgTable(
 export const analytics = pgTable("analytics", {
   id: varchar("id")
     .primaryKey()
-    .default(sql`gen_random_uuid()`),
+    .default(sql`md5(random()::text || clock_timestamp()::text)`),
   channelId: varchar("channel_id"),
   date: timestamp("date").notNull(),
   messagesSent: integer("messages_sent").default(0),
@@ -848,7 +848,7 @@ export const analytics = pgTable("analytics", {
 export const whatsappChannels = pgTable("whatsapp_channels", {
   id: varchar("id")
     .primaryKey()
-    .default(sql`gen_random_uuid()`),
+    .default(sql`md5(random()::text || clock_timestamp()::text)`),
   name: text("name").notNull(),
   phoneNumber: varchar("phone_number", { length: 20 }).notNull().unique(),
   phoneNumberId: varchar("phone_number_id", { length: 50 }).notNull(),
@@ -870,7 +870,7 @@ export const whatsappChannels = pgTable("whatsapp_channels", {
 export const webhookConfigs = pgTable("webhook_configs", {
   id: varchar("id")
     .primaryKey()
-    .default(sql`gen_random_uuid()`),
+    .default(sql`md5(random()::text || clock_timestamp()::text)`),
   channelId: varchar("channel_id"), // No foreign key - global webhook for all channels
   webhookUrl: text("webhook_url").notNull(),
   verifyToken: varchar("verify_token", { length: 100 }).notNull(),
@@ -885,7 +885,7 @@ export const webhookConfigs = pgTable("webhook_configs", {
 export const messageQueue = pgTable("message_queue", {
   id: varchar("id")
     .primaryKey()
-    .default(sql`gen_random_uuid()`),
+    .default(sql`md5(random()::text || clock_timestamp()::text)`),
   campaignId: varchar("campaign_id").references(() => campaigns.id),
   channelId: varchar("channel_id").references(() => whatsappChannels.id),
   recipientPhone: varchar("recipient_phone", { length: 20 }).notNull(),
@@ -911,7 +911,7 @@ export const messageQueue = pgTable("message_queue", {
 export const apiLogs = pgTable("api_logs", {
   id: varchar("id")
     .primaryKey()
-    .default(sql`gen_random_uuid()`),
+    .default(sql`md5(random()::text || clock_timestamp()::text)`),
   channelId: varchar("channel_id").references(() => channels.id),
   requestType: varchar("request_type", { length: 50 }).notNull(), // send_message, get_template, webhook_receive
   endpoint: text("endpoint").notNull(),
@@ -928,7 +928,7 @@ export const apiLogs = pgTable("api_logs", {
 export const panelConfig = pgTable("panel_config", {
   id: varchar("id")
     .primaryKey()
-    .default(sql`gen_random_uuid()`),
+    .default(sql`md5(random()::text || clock_timestamp()::text)`),
   name: varchar("name").notNull(),
   tagline: varchar("tagline"),
   description: text("description"),
@@ -949,8 +949,8 @@ export const panelConfig = pgTable("panel_config", {
 export const groups = pgTable("groups", {
   id: varchar("id")
     .primaryKey()
-    .default(sql`gen_random_uuid()`),
-  channelId: uuid("channelId"), 
+    .default(sql`md5(random()::text || clock_timestamp()::text)`),
+  channelId: varchar("channelId"), 
   name: varchar("name", { length: 255 }).notNull(),
   description: text("description"),
   createdBy: varchar("created_by").references(() => users.id, { onDelete: "cascade" }),
@@ -961,7 +961,7 @@ export const groups = pgTable("groups", {
 export const firebaseConfig = pgTable("firebase_config", {
   id: varchar("id")
     .primaryKey()
-    .default(sql`gen_random_uuid()`),
+    .default(sql`md5(random()::text || clock_timestamp()::text)`),
   apiKey: text("api_key"),
   authDomain: text("auth_domain"),
   projectId: text("project_id"),
@@ -979,7 +979,7 @@ export const firebaseConfig = pgTable("firebase_config", {
 export const storageSettings = pgTable("storage_settings", {
   id: varchar("id")
     .primaryKey()
-    .default(sql`gen_random_uuid()`),
+    .default(sql`md5(random()::text || clock_timestamp()::text)`),
   provider: text("provider").default("digitalocean"), // can extend later
   spaceName: text("space_name").notNull(),
   endpoint: text("endpoint").notNull(),
@@ -994,7 +994,7 @@ export const storageSettings = pgTable("storage_settings", {
 export const aiSettings = pgTable("ai_settings", {
   id: varchar("id")
     .primaryKey()
-    .default(sql`gen_random_uuid()`),
+    .default(sql`md5(random()::text || clock_timestamp()::text)`),
   channelId: varchar("channel_id").references(() => channels.id),
   provider: text("provider").notNull().default("openai"),
   apiKey: text("api_key").notNull(),
@@ -1017,7 +1017,7 @@ export const aiSettings = pgTable("ai_settings", {
 export const sites = pgTable("sites", {
   id: varchar("id")
     .primaryKey()
-    .default(sql`gen_random_uuid()`),
+    .default(sql`md5(random()::text || clock_timestamp()::text)`),
   channelId: varchar("channel_id"),
   name: text("name").notNull(),
   domain: text("domain").notNull(),
@@ -1039,7 +1039,7 @@ export const sites = pgTable("sites", {
 export const smtpConfig = pgTable("smtp_config", {
   id: varchar("id")
     .primaryKey()
-    .default(sql`gen_random_uuid()`),
+    .default(sql`md5(random()::text || clock_timestamp()::text)`),
 
   host: text("host").notNull(),
   port: integer("port").notNull(),
@@ -1057,7 +1057,7 @@ export const smtpConfig = pgTable("smtp_config", {
 export const otpVerifications = pgTable("otp_verifications", {
   id: varchar("id")
     .primaryKey()
-    .default(sql`gen_random_uuid()`), // UUID primary key
+    .default(sql`md5(random()::text || clock_timestamp()::text)`), // UUID primary key
 
   userId: varchar("user_id")
     .notNull(), 
