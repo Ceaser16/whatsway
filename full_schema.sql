@@ -271,7 +271,7 @@ CREATE TABLE "firebase_config" (
 --> statement-breakpoint
 CREATE TABLE "groups" (
 	"id" varchar PRIMARY KEY DEFAULT md5(random()::text || clock_timestamp()::text) NOT NULL,
-	"channelId" uuid,
+	"channelId" varchar,
 	"name" varchar(255) NOT NULL,
 	"description" text,
 	"created_by" varchar,
@@ -431,7 +431,7 @@ CREATE TABLE "plans" (
 CREATE TABLE "sent_notifications" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"notification_id" integer NOT NULL,
-	"user_id" uuid NOT NULL,
+	"user_id" varchar NOT NULL,
 	"is_read" boolean DEFAULT false,
 	"read_at" timestamp,
 	"sent_at" timestamp DEFAULT now()
